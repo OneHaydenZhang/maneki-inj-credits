@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maneki Inj — INJ credits (demo)</title>
+<style>
+  :root { --bg:#0b0f14; --card:#121821; --line:#1f2a36; --teal:#14d6ba; --mut:#7d8a99; }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:#e6edf3; font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif; }
+  .wrap { max-width:720px; margin:48px auto; padding:0 18px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  h1 { font-size:20px; margin:0 0 4px; } .mut { color:var(--mut); }
+  .bal { font-size:40px; font-weight:700; color:var(--teal); }
+  .presets { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0; }
+  .preset { background:#0e141c; color:#e6edf3; border:1px solid var(--line); border-radius:10px; padding:10px 12px; cursor:pointer; }
+  .preset:hover { border-color:var(--teal); } .preset small { color:var(--mut); }
+  button.ghost { background:transparent; color:var(--mut); border:1px solid var(--line); border-radius:10px; padding:8px 12px; cursor:pointer; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+  td,th { text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--mut); }
+  input { background:#0e141c; border:1px solid var(--line); color:#e6edf3; border-radius:8px; padding:8px; width:100%; }
+  .row { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚡ INJ Credits</h1>
+  <p class="mut">Agents run on INJ credits, settled on Injective. Top up by sending native INJ; the backend reads the on-chain transfer and credits you.</p>
+
+  <div class="card" style="margin-bottom:14px">
+    <label class="mut">Demo login wallet (0x…)</label>
+    <input id="who" placeholder="0xyourwallet" oninput="window.LOGIN_ADDRESS=this.value;refreshPoints&&refreshPoints()" />
+  </div>
+
+  <div class="card" id="pointsPanel">
+    <div class="row">
+      <div>
+        <div class="mut" style="text-transform:uppercase;letter-spacing:.08em;font-size:12px">⚡ INJ Credits</div>
+        <div class="bal"><span id="ptsBalance">—</span></div>
+        <p class="mut">Per tick <b id="ptsPerTick">1</b> · 1 INJ = <b id="ptsRate">100</b> credits · <span id="ptsNet">mainnet</span></p>
+      </div>
+      <div style="min-width:260px">
+        <div class="mut">Top up with INJ</div>
+        <div class="presets" id="ptsPresets"></div>
+        <button class="ghost" id="btnScan">I sent it · refresh</button>
+        <div class="mut" id="ptsMsg" style="margin-top:8px"></div>
+        <div id="ptsOff" class="mut" style="color:#e0a458;margin-top:8px;display:none">Top-up not configured by the operator.</div>
+      </div>
+    </div>
+    <details style="margin-top:14px"><summary class="mut" style="cursor:pointer">Ledger</summary>
+      <table><thead><tr><th>Time</th><th>Type</th><th style="text-align:right">Δ</th></tr></thead><tbody id="ptsLedger"></tbody></table>
+    </details>
+  </div>
+</div>
+<script src="/credits.js"></script>
+</body>
+</html>

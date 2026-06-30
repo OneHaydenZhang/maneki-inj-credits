@@ -1,0 +1,5 @@
+# INJ credit economy — minimal deps
+fastapi>=0.110
+uvicorn[standard]>=0.27
+injective-py>=1.15      # Injective indexer + chain (deposit detection, MsgSend, broadcast)
+# NOTE: requires Python 3.12 (injective-py pins a coincurve with no cp313 wheel)
