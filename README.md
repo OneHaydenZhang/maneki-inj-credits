@@ -39,6 +39,13 @@ server/app.py                  runnable demo  (uvicorn server.app:app)
 web/                           one-click top-up panel (presets → Keplr/Leap/OKX signDirect)
 ```
 
+### 📸 Preview — the credit panel
+
+<div align="center">
+<img src="./docs/credits-panel.png" alt="INJ credit panel: balance, one-click top-up packs, and the on-chain settlement ledger" width="640" />
+<br/><sub>One-click INJ top-up packs · live credit balance · the on-chain settlement ledger (deposits + per-decision burns).</sub>
+</div>
+
 ---
 
 ## 🏆 Injective Nova — Agent Infrastructure × AI Smart Payments

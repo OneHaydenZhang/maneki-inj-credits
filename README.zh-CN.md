@@ -39,6 +39,13 @@ server/app.py                  可运行 demo（uvicorn server.app:app）
 web/                           一键充值面板（预设档 → Keplr/Leap/OKX signDirect）
 ```
 
+### 📸 界面预览 — 积分面板
+
+<div align="center">
+<img src="./docs/credits-panel.png" alt="INJ 积分面板：余额、一键充值档、链上结算流水" width="640" />
+<br/><sub>一键 INJ 充值档 · 实时积分余额 · 链上结算流水（充值入账 + 每次决策扣费）。</sub>
+</div>
+
 ---
 
 ## 🏆 Injective Nova — Agent 基础设施 × AI 智能支付

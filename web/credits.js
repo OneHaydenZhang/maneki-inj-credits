@@ -104,5 +104,24 @@ async function scanDeposits() {
 
 window.addEventListener('DOMContentLoaded', () => {
   if ($('#btnScan')) $('#btnScan').onclick = scanDeposits;
+  // ?demo — render the panel with sample data (no backend) for previews/screenshots.
+  if (new URLSearchParams(location.search).has('demo')) {
+    const now = Date.now() / 1000;
+    POINTS = {
+      balance: 482,
+      config: { treasury: 'inj18j9etc23pka9rhzy36qlchqrpttqm38mku0huu', network: 'mainnet', rate_inj: 100, per_tick: 1, presets: [1, 5, 10, 100, 200, 1000] },
+      history: [
+        { ts: now - 40, kind: 'deposit', points: 500, note: 'deposit 5.000000 INJ → 500 积分' },
+        { ts: now - 30, kind: 'tick', points: -1, note: 'BTC navigator tick #41' },
+        { ts: now - 24, kind: 'tick', points: -1, note: 'ETH hunter tick #18' },
+        { ts: now - 18, kind: 'tick', points: -1, note: 'SOL sentinel tick #7' },
+        { ts: now - 600, kind: 'deposit', points: 100, note: 'deposit 1.000000 INJ → 100 积分' },
+      ],
+    };
+    const card = document.querySelectorAll('.card')[0]; if (card) card.style.display = 'none';
+    renderPointsPanel();
+    const det = document.querySelector('details'); if (det) det.open = true;   // show the ledger
+    return;
+  }
   refreshPoints();
 });
