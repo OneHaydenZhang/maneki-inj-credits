@@ -1,172 +1,95 @@
 <div align="center">
 
-# 🐱⚡ Maneki Inj
+# 🐱⚡ Maneki Inj — INJ 积分与结算层
 
-### 搭载 **Injective** 作为结算层的 **Maneki AI** 多 Agent 平台
-
-_给 AI agent 一个装着 INJ 的钱包——它自己盯盘、推理、交易，每一个决策都在链上付费，直到燃料耗尽。_
+### 为自治 AI Agent **供能**的 Injective 结算层 —— 用原生 INJ「按决策付费」。
 
 [![Injective Nova](https://img.shields.io/badge/Injective-Nova_Program-0F1419?labelColor=00F2FE&style=for-the-badge)](https://injectivenova.com/)
 [![Live](https://img.shields.io/badge/Live-www.manekiai--inj.com-14D6BA?style=for-the-badge)](http://www.manekiai-inj.com/)
-[![Built with injective-py](https://img.shields.io/badge/built_with-injective--py-5C6BC0?style=for-the-badge)](https://github.com/InjectiveLabs/injective-py)
+[![injective-py](https://img.shields.io/badge/built_with-injective--py-5C6BC0?style=for-the-badge)](https://github.com/InjectiveLabs/injective-py)
 
 [English](./README.md) · **简体中文**
 
 </div>
 
-> 📦 **本仓库是 Maneki Inj 的 Injective 充值 / 结算层，单独抽取成一个独立模块**——即驱动 agent 运行的「链上 INJ 充值 + 积分账本 + 扣费钩子」，单独呈现。完整的多 agent 平台在另一个仓库。
->
-> **仓库结构**
-> ```
-> server/inj_chain.py     Injective SDK 链上原语：充值构建 / 广播 / indexer 扫描
-> server/deposits.py      scan_for_user —— 给某钱包自己的 INJ 转账入账（txhash 去重）
-> server/points_model.py  INJ 积分账本：balance / credit / debit / try_debit / seen_txhash
-> server/points_config.py treasury / 汇率 / 每 tick / 预设档（env 驱动）
-> server/points_routes.py FastAPI 接口：/api/points、/deposit/build|submit、/scan
-> server/db.py            最小 SQLite（points_ledger / points_tx / deposit_senders）
-> server/app.py           可运行 demo（uvicorn server.app:app）
-> web/                    一键充值面板（预设档 → Keplr/Leap/OKX signDirect）
-> ```
+> ### ⚠️ 本仓库范围
+> 本仓库**只开源 Maneki Inj 的 Injective 积分 / 结算层**——即把链上 INJ 变成 agent 燃料并计量的那部分。
+> **核心的多 agent 交易引擎（策略、LLM 决策、下单执行、风控）为闭源，不在本仓库。** 这里的代码自洽、可运行，且**不含任何私钥或个人隐私数据**。
 
 ---
 
-> **Maneki AI 是智能层——一支自治交易 Agent 舰队。**
-> **Injective 是驱动它的结算层**——每个 agent 的供资、计量、存续，完全用原生 **INJ** 结算。Agent 做出的每一个决策，都是一次链上经济行为。
+## 这是什么
+
+**Maneki Inj** 是一个由一支自治 AI Agent 舰队替你交易的平台。这些 agent 不是免费运行的——**它们用原生 INJ 为自己的运行付费，在 Injective 上结算。** 本仓库就是这一层：
+
+> **在 Injective 上充 INJ → 变成 agent 燃料（积分）→ agent 每做一个决策烧一点积分 → 积分耗尽，agent 停。**
+
+它是一套自洽的「**按决策付费（pay-per-decision）**」支付轨道：机器发起、链上结算、按付款方精确归属、幂等、演示安全。任何 Injective 上的 AI-agent 产品都能复用它来对 agent 运行计费。
+
+```
+server/inj_chain.py            Injective SDK 链上原语——构建 MsgSend / 广播 / indexer 扫描
+server/deposits.py             scan_for_user——给某钱包【自己的】INJ 转账入账（txhash 去重）
+server/points_model.py         INJ 积分账本——balance / credit / debit / try_debit / seen_txhash
+server/points_config.py        运营方配置——treasury / 汇率 / 每 tick / 预设档（env 驱动）
+server/points_routes.py        FastAPI 接口——/api/points、/deposit/build|submit、/scan
+server/credits_engine_hook.py  （闭源）agent 循环如何【消耗】积分（起跑预检 + 每 tick）
+server/admin_points.py         运营方视图——每钱包余额 / 已消耗 / 已充 INJ
+server/db.py                   最小 SQLite——points_ledger / points_tx / deposit_senders
+server/app.py                  可运行 demo（uvicorn server.app:app）
+web/                           一键充值面板（预设档 → Keplr/Leap/OKX signDirect）
+```
 
 ---
 
-## 🏆 Injective Nova — _Agent 基础设施 × AI 智能支付_
+## 🏆 Injective Nova — Agent 基础设施 × AI 智能支付
 
-为 **[Injective Nova](https://injectivenova.com/)** 计划打造（由 **Injective × Microsoft × Web3Labs** 联合发起 · _AI × 真实应用场景_）。Maneki Inj 正好落在 Nova 的两个创意方向上：
+为 **[Injective Nova](https://injectivenova.com/)** 计划打造（由 **Injective × Microsoft × Web3Labs** 联合发起）。这一层正好直接对应 Nova 的两个方向：**Agent Infrastructure**（让一支 agent 舰队得以存在的运行经济）与 **AI Smart Payments**（agent 进行真实的链上经济行为）。
 
-- **Agent Infrastructure（Agent 基础设施）**——一个真正的多 agent 系统：一个钱包跑一整支相互独立、自我进化的 agent 舰队。
-- **AI Smart Payments（AI 智能支付）**——agent 进行真实的链上经济行为：它们用 INJ **为自己的运行付费**，在 Injective 上结算与记账。
+📎 [Nova 官网](https://injectivenova.com/) · [提交要求与评估标准（中文）](https://injective.com/zh/blog/injective-nova-program-cn) · [Injective 文档](https://docs.injective.network) · [AI 开发者文档](https://docs.injective.network/developers-ai/index) · [Injective Agent SDK](https://github.com/InjectiveLabs/injective-agent-sdk) · [Injective Agents 介绍](https://injective.com/blog/injective-agents-the-platform-for-autonomous-ai-trading-agents) · [Build on Injective](https://injective.com/build)
 
-| 评估标准 | Maneki Inj 如何回应 |
+---
+
+# 第一部分 — 产品
+
+## 1. 问题：自治 agent 需要一套经济"生命维持系统"
+
+一个 7×24 运行的 AI agent 并非零成本——它消耗模型推理、数据与在线时长。要让 agent 真正"自治"而不是"被人盯着"，它需要一种方式**为自己的存在付费**，且这个计量是透明、无需信任、钱花完就停的。今天这个计量通常是一份隐藏的 SaaS 订阅。我们把它搬到**链上、用 INJ 计价**。
+
+## 2. 模型：按决策付费（pay-per-decision）
+
+agent 生命的原子单位是一次**决策 tick**——一轮「采集 → 推理 → 行动」。Maneki Inj 给这个单位定价：
+
+| 概念 | 含义 |
 | --- | --- |
-| **创新性** | 全新原语：**按决策付费（pay-per-decision）**——把 Injective 用作一个自治 AI agent 经济体的计量与结算轨道。 |
-| **技术实现** | 真实接入 `injective-py`、跑在**主网**（indexer 读 + 非托管 MsgSend 签名 + 广播）；AI 与链能力深度耦合（燃料 ↔ 认知）。 |
-| **应用价值** | 让任何人都能部署一支交易 agent 舰队，且有清晰的链上成本模型——零运维、无需盯守。 |
-| **产品体验** | 一键钱包充值、预设积分档、实时决策流、中英双语理由——Human-friendly AI。 |
-| **生态契合** | 一个通用的结算范式，任何 Injective 上的 AI-agent 产品都能复用来对 agent 运行计费。 |
+| **积分（Credit）** | agent 运行的单位。`1 INJ = INJ_POINTS_PER_INJ` 积分（默认 100）。 |
+| **燃烧速率** | 每个决策 tick 花 `INJ_POINTS_PER_TICK` 积分（默认 1）。 |
+| **燃料耗尽** | 当钱包付不起下一 tick，它的 agent **自动停**。没有静默透支。 |
+| **关注点分离** | 积分计量的是**思考权**，与**交易保证金/盈亏完全独立**——策略资金在别处，INJ 只买"认知 + 在线"。 |
 
-📎 **参考资源：** [Nova 官网](https://injectivenova.com/) · [提交要求与评估标准（中文）](https://injective.com/zh/blog/injective-nova-program-cn) · [Injective 文档](https://docs.injective.network) · [AI 开发者文档](https://docs.injective.network/developers-ai/index) · [Injective Agent SDK](https://github.com/InjectiveLabs/injective-agent-sdk) · [Injective Agents 介绍](https://injective.com/blog/injective-agents-the-platform-for-autonomous-ai-trading-agents) · [Build on Injective](https://injective.com/build)
+为什么要把"思考成本"和"交易资金"解耦？因为它们是两种不同的风险、不同的归属方：*平台*提供智能与在线（用 INJ 积分付费），*用户*提供交易资金（自己的钱）。把二者混在一起，正是大多数"交易机器人"不透明的根源。按决策付费让"自治的成本"变得显式、且在链上。
 
----
+## 3. 用户流程
 
-## 目录
+1. **连接钱包**，进入 agent 面板。
+2. **充值**——选一个预设档（`+1 / +5 / +10 / +100 / +200 / +1000 积分`）。应用折算成 INJ 并拉起钱包（Keplr / Leap / OKX）签一笔到 treasury 的转账。
+3. **自动入账**——后端经 Injective indexer 看到你的链上转账，按发送方归属、按 txhash 去重，把积分记到*你的*账户。
+4. **跑 agent**——agent 一边思考一边烧积分；实时仪表显示余额递减；积分不够时 `402` 拦住启动。
+5. **运营方视图**——后台能看到每个用户的余额、已消耗积分（消耗的运行时长）、已充 INJ。
 
-1. [核心论点 — Injective 作为 agent 经济的结算层](#1-核心论点--injective-作为-agent-经济的结算层)
-2. [多 Agent 系统架构](#2-多-agent-系统架构核心)
-3. [INJ 如何驱动 agent — 结算闭环](#3-inj-如何驱动-agent--结算闭环)
-4. [快速开始](#4-快速开始)
-5. [如何接入 Injective — 技术细节](#5-如何接入-injective--技术细节)
-6. [系统架构与部署](#6-系统架构与部署)
-7. [隐私 · 风控 · 技术栈](#7-隐私--风控--技术栈)
-8. [作者](#作者)
+## 4. 为什么这是个好产品
 
----
-
-## 1. 核心论点 — Injective 作为 agent 经济的结算层
-
-自治 AI agent 要"成立"，需要两件事：一个**持续思考**的地方，和一个**为之付费**的方式。Maneki Inj 让 Injective 成为这条支付与结算的轨道。
-
-- **INJ 是燃料。** Agent 的心跳就是一次*决策 tick*，每个 tick 烧掉一定 **INJ 积分**。积分归零 → agent 停摆。链在字面意义上驱动着舰队的认知。
-- **Injective 是 agent 经济结算之处。** 用户通过发送**原生 INJ** 给 agent 供资；后端经 **Injective indexer** 检测并核对到账，按链上**发送方**精确归属，计入积分账本。这正是字面意义上的 **AI Smart Payments**：机器驱动、链上发生、以 INJ 结算。
-- **AI 是核心行动者。** 人只设定人格与预算；之后 agent 自己行动——盯盘、推理、交易、自我修正——直到 INJ 耗尽。
-
-> 永续执行层是可插拔的（MVP 把订单路由到某永续场所）。而每个 agent 运行的**供资、支付与记账，完全发生在 Injective 上**——这正是本项目贡献的全新一层。
+- **无需信任的计量。** 积分*只*来自经 indexer 核验的、来自你自己钱包的转账——刷新不会造分，并发充值者各记各的。平台甚至从不读 treasury 余额。
+- **非托管。** 平台负责构建与广播，但**由你的钱包签名**。任何充值私钥都不上服务器（只存 treasury *地址*）。
+- **经济对齐。** 运营方对 agent 的*运行时长*（真实成本）收费，而不是托管用户的交易资金。一个干净、可复用的 Injective 变现范式。
+- **对用户友好。** 一键充值、预设档、实时燃料表、透明账本。
 
 ---
 
-## 2. 多 Agent 系统架构（核心）
+# 第二部分 — 技术
 
-**一个钱包 → 一整支舰队。** 一个登录钱包可以**并行**跑多个 agent——甚至同一个标的上跑多个不同策略。每个 agent 都是相互隔离、自我进化的经济行动者。
+## 5. 如何接入 Injective
 
-```text
-                        ┌──────────────────────── INJECTIVE （结算与燃料） ─────────────────────────┐
- 钱包                    │  原生 INJ ── MsgSend ──▶ treasury ──▶ indexer.fetch_account_txs           │
- (Keplr/Leap/OKX)  ─────│        signDirect                          │  按 SENDER 归属 + txhash 去重 │
-        │ 签名登录        └────────────────────────────────────────────┼───────────────────────────────┘
-        ▼                                                             ▼  入账  (1 INJ = N 积分)
- ┌──────────────┐      ┌──────────────── 多 agent 引擎 · 按 agent_id 隔离 ──────────────┐
- │  Maneki Inj  │      │  Agent#1 BTC·Navigator ┐                                        │
- │  (FastAPI)   │ ───▶ │  Agent#2 ETH·Hunter    ├─ 每个 = 独立 async 循环：              │
- └──────────────┘      │  Agent#3 SOL·Sentinel  │     tick → 扣 INJ 积分                 │
-        ▲              │  Agent#4 BTC·Apex  …   ┘       → 采集 → LLM 决策                │
-        │ 按钱包、       │                                 → 风控钳制 → 执行               │
-        │ 按 agent      │                                 → Ticket / Decision + 自调 lessons│
-        │ 隔离          └────────────┬──────────────────────────────────────────────────┘
-        │                  积分耗尽 ─┘ agent 自动停（没燃料）
-```
-
-**为什么它是一个"系统"而非脚本：**
-
-| 能力 | 实现 |
-| --- | --- |
-| **舰队，而非单 bot** | 引擎按 `agent_id`（而非钱包）隔离会话 → 一个钱包可并行无限个 agent，各自一条独立 asyncio 循环。 |
-| **每 agent 身份** | 一个 agent = 一个标的 + 一种**人格**（Sentinel / Navigator / Hunter / Apex / 自定义 prompt）+ 自己的周期、杠杆与资金上限。 |
-| **完整交易生命周期** | 每个 agent 维护一个 **Ticket**（开→管→平），每个 tick 产出一条 **Decision**（中英双语理由、置信度、观察）——全部落库。 |
-| **自我进化** | Agent 从自己平掉的交易中提炼 **lessons** 回灌进下一轮 prompt；周期性 + 停止时生成复盘报告。 |
-| **自我修正** | 真实执行反馈（拒单、风控钳制、成交）回放进下一 tick，让 agent 自适应。 |
-| **天然安全** | 硬风控（杠杆/名义钳制、kill-switch）、全舰队 LLM 并发上限、重启自动恢复、**燃料耗尽自动停**。 |
-| **多租户隔离** | 钱包签名登录（SIWE 风格）；每份密钥/配置/交易/报告按钱包命名空间隔离；签名私钥 Fernet 加密存储。 |
-
----
-
-## 3. INJ 如何驱动 agent — 结算闭环
-
-```text
-┌── 充值  (在 Injective 上) ─────────────────────────────────────────────┐
-│ Agent 中心预设档：  [+1] [+5] [+10] [+100] [+200] [+1000 积分]          │
-│        ▼ 按 1 INJ = INJ_POINTS_PER_INJ 折算成 INJ                       │
-│ 钱包 (Keplr/Leap/OKX) 签 MsgSend  →  treasury (inj1…)                  │
-│        ▼                                                               │
-│ 后端经 Injective indexer 读取 treasury 的【入账】转账记录              │
-│   • 按 SENDER（付款方地址）归属                                         │
-│   • 按链上 txhash 幂等去重   ·   从不读取 treasury 余额                 │
-│        ▼  给付款方账户入账积分                                          │
-└────────────────────────────────────────────────────────────────────────┘
-┌── 消耗  (每个 agent，每个 tick) ──────────────────────────────────────┐
-│ try_debit(INJ_POINTS_PER_TICK)：                                       │
-│   积分 ≥ 成本 → 思考并可能交易   ·   积分 < 成本 → 停止                 │
-│ 用 0 积分启动 agent → HTTP 402（请先充值）                              │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-**为什么正确且演示安全：** 积分**只**来自经 indexer 核验的、从*你的*钱包到 treasury 的真实转账，并按 txhash 去重——所以刷新永远不会凭空造分，并发充值的人也各记各的。平台只读*入账记录*，从不读 treasury 余额。
-
----
-
-## 4. 快速开始
-
-```bash
-./run.sh                       # 启动多 agent 服务，默认 :4180
-# 打开 http://127.0.0.1:4180/   （或线上：http://www.manekiai-inj.com/）
-```
-
-1. **连接钱包**——签名登录（不发交易、不花 gas、不接触资金）。
-2. **Agent 中心 → 充值 INJ 积分**——预设档会拉起 Keplr / Leap / OKX 发送 INJ，到账自动入账。
-3. **Settings** → 你的永续签名私钥（服务端 Fernet 加密）+ 风控限额。
-4. **+ New Agent** → 选标的 / 人格 / 周期 → 启动。想跑几个跑几个。
-5. 看 **行情台**（行情 + 实时决策流）、**账户总览**、**交易历史**（每个 ticket 的开→管→平→复盘）。
-
-**运营方配置**（本地 `data/maneki_inj.env`，`run.sh` 自动加载；模板见 `data.example/inj_deposit.env.example`）：
-
-```bash
-INJ_TREASURY_ADDRESS=inj1youroperatoraddress   # 用户充值的收款地址（服务器只存地址）
-INJ_TREASURY_NETWORK=mainnet
-INJ_POINTS_PER_INJ=100                          # 1 INJ = 100 积分
-INJ_POINTS_PER_TICK=1                           # 每个 agent tick 烧多少积分
-HYPERPILOT_OPENROUTER_KEY=sk-or-...             # 全舰队共享的 LLM key
-MANEKI_ADMIN_TOKEN=...                          # 管理后台令牌（/admin.html）
-```
-
----
-
-## 5. 如何接入 Injective — 技术细节
-
-所有 Injective 访问都集中在 **`server/inj_chain.py`**，经官方 **`injective-py`** SDK，跑在一条专用后台事件循环上，供其余代码以同步函数调用。
+所有链上访问集中在 **`server/inj_chain.py`**，经官方 **`injective-py`** SDK，跑在一条专用后台事件循环上，供其余代码以同步函数调用。全程原生 INJ 的 denom 为 **`inj`**、**18 位精度**。
 
 ### 5.1 网络客户端
 
@@ -179,13 +102,9 @@ net = Network.mainnet() if network == "mainnet" else Network.testnet()
 clients = (net, IndexerClient(net), AsyncClient(net))    # 按网络缓存
 ```
 
-`INJ_TREASURY_NETWORK` 选 mainnet/testnet，同一套代码两边都跑。原生 INJ 的 denom 是 **`inj`**，**18 位精度**。
-
 ### 5.2 充值 = 用户在浏览器里自己签名的非托管 INJ 转账
 
-平台永远拿不到用户私钥——用户在自己钱包里签一笔 Cosmos `MsgSend`。三步：
-
-**(a) 构建** 未签名交易（服务端，`/api/points/deposit/build`）：
+**(a) 构建**（服务端，`POST /api/points/deposit/build`）：
 ```python
 addr = Address.from_acc_bech32(sender_inj)
 await addr.async_init_num_seq(net.lcd_endpoint)            # 从链上取账号 + 序列号
@@ -205,7 +124,7 @@ const signed = await wallet.signDirect(chainId, k.bech32Address,
                                        { bodyBytes, authInfoBytes, chainId, accountNumber });
 ```
 
-**(c) 广播**（服务端，`/api/points/deposit/submit`）：
+**(c) 广播**（服务端，`POST /api/points/deposit/submit`）：
 ```python
 tx_raw = cosmos_tx.TxRaw(body_bytes=…, auth_info_bytes=…, signatures=[…])
 res = await ac.broadcast_tx_sync_mode(tx_raw.SerializeToString())   # 返回 txhash
@@ -213,7 +132,7 @@ res = await ac.broadcast_tx_sync_mode(tx_raw.SerializeToString())   # 返回 txh
 
 ### 5.3 结算 = 读链上、给付款方入账（精确、幂等）
 
-我们**从不读 treasury 余额**，而是经 Injective indexer 读它的**入账转账历史**、给*发送方*入账：
+我们**从不读 treasury 余额**，而是经 Injective indexer 读它的**入账转账历史**、给*发送方*入账（`server/deposits.py`）：
 
 ```python
 r = await ic.fetch_account_txs(address=treasury, pagination=PaginationOption(limit=40))
@@ -226,56 +145,63 @@ for t in r["data"]:
             # 给匹配的登录钱包入账，按 t["hash"] 幂等
 ```
 
-- **按发送方归属** → 多租户、并发安全；两人同时充值各记各的。
+- **按发送方归属** → 多租户、并发安全。
 - **按链上 txhash 幂等** → 刷新永远不会重复造分。
 - **从不读余额** → 只有当存在一条来自*你的*地址的真实转账记录时才算充值成功。
 
-### 5.4 为什么这是对的产品设计
+`scan_for_user(address)` 只给"发送方映射到请求者钱包"的转账入账——所以一个用户的"刷新"永远拿不到别人的充值。
 
-| 取舍 | 理由 |
-| --- | --- |
-| **用积分，而非按笔扣 INJ** | 把 *agent 运行成本*（认知/在线）与*交易保证金*解耦。INJ 计量的是**思考权**；agent 的盈亏是另一回事——这就是 "AI Smart Payments" 原语：按决策付费。 |
-| **单一运营方 treasury** | 链上足迹最小；用户充到一个 `inj1` 地址。按发送方归属即可精确记账，无需每用户地址或 memo。 |
-| **浏览器内 signDirect** | 非托管——平台负责构建与广播，用户钱包负责签名。任何充值私钥都不上服务器（只存 treasury **地址**）。 |
-| **用 indexer，而非轮询余额** | indexer 给出*转账记录*（谁付的、付了多少、哪笔 tx）——这是入账唯一正确的信号。余额增量无法归属也无法去重。 |
-| **燃料耗尽自动停** | 没有 INJ 积分的 agent 字面上付不起下一个决策 → 它停。经济模型和运行模型是同一个模型。 |
+### 5.4 消耗侧（认知的结算）
 
-### 5.5 代码索引（Injective 面）
+闭源引擎与本层只有两个接触点（`server/credits_engine_hook.py`）：
 
-| 文件 | Injective 面 |
-| --- | --- |
-| `server/inj_chain.py` | `Network` · `IndexerClient.fetch_account_txs` · `AsyncClient`（`composer.msg_send`、`current_chain_gas_price`、`broadcast_tx_sync_mode`）· `Address` bech32↔0x |
-| `server/deposits.py` | `scan_for_user()`——给某钱包自己的 INJ 转账入账，txhash 去重 |
-| `server/points_model.py` | INJ 积分账本：`balance / credit / debit / try_debit / seen_txhash` |
-| `server/points_model.py (try_debit, called by the agent loop)` | 多 agent 循环；每 tick `try_debit`（燃料）+ 耗尽自动停 |
-| `server/points_routes.py` | `GET /api/points`、`POST /api/points/deposit/build\|submit`、`POST /api/points/scan` |
-| `web/credits.js` | Agent 中心充值面板（预设档 → `signDirect`）+ 积分计 |
+```python
+def can_start(address):       # 起跑预检 → API 把 False 变成 HTTP 402
+    return points_model.balance(address) >= points_config.points_per_tick()
 
----
-
-## 6. 系统架构与部署
-
-```text
-单进程 FastAPI  (auto_service.app:app)
-├─ handlers/        REST API：auth · config · markets · agents · points · portfolio · admin
-├─ services/engine.py      多 agent 引擎——每 agent 一条 async 循环；每 tick 扣 INJ 积分
-│  services/inj_chain.py   Injective：充值构建 / 广播 / indexer 扫描
-│  services/deposits.py    链上 INJ → 积分（按发送方、txhash 去重）
-│  services/agent_service.py   合并配置 · 风控钳制 · 自调 lessons
-├─ models/   agent · ticket · decision · points · config   (SQLite)
-├─ crypto.py / auth.py     Fernet 加密私钥 + 钱包签名登录
-└─ web/                    原生 ES-module SPA：行情台 / Agent 中心 / 账户总览 / 交易历史 / 后台
+def charge_one_tick(address): # 每个决策 tick 调一次；False → 没燃料，停 agent
+    return points_model.try_debit(address, points_config.points_per_tick(), kind="tick")
 ```
 
-**部署：** GCE 虚机上的 systemd 服务（用 `uv` 装 Python 3.12），监听 80 端口，**Cloudflare** 前置到 **[www.manekiai-inj.com](http://www.manekiai-inj.com/)**。更新用 `auto_service/deploy/redeploy.sh`。
+`try_debit` 是原子的（余额行与账本行在同一把锁下一起移动），且永不为负。
 
----
+### 5.5 数据模型（`server/db.py`）
 
-## 7. 隐私 · 风控 · 技术栈
+| 表 | 用途 |
+| --- | --- |
+| `points_ledger` | 每钱包积分 `balance` |
+| `points_tx` | 追加式流水；充值带 `txhash`（幂等）+ `token_amount`（INJ） |
+| `deposit_senders` | 把充值的 inj/0x 地址 → 应入账的登录钱包 |
 
-- **密钥永不进 git。** 每钱包签名私钥在 SQLite 里 Fernet 加密（`HYPERPILOT_MASTER_KEY`）；运营方密钥只存本地 `data/maneki_inj.env` / 服务器 `/etc/maneki-inj.env`（root `600`）。整个 `data/` 被 `.gitignore`，服务器只存 treasury **地址**——**没有任何充值私钥**。
-- **代码强制风控：** 杠杆 `min(模型, 用户, 标的)` · 单笔名义封顶 · kill-switch · 连续错误停 · max-ticks · **INJ 积分耗尽自动停**。
-- **技术栈：** FastAPI · Uvicorn · **injective-py**（indexer + chain）· eth-account（钱包验签）· cryptography（Fernet）· OpenRouter · 原生 ES-module 前端（无构建）。
+## 6. API 速查
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `GET` | `/api/points` | 余额 + 配置（treasury / 汇率 / 每 tick / 预设档）+ 流水 |
+| `POST` | `/api/points/deposit/build` | 构建一笔未签名的 INJ `MsgSend` 供钱包 `signDirect` |
+| `POST` | `/api/points/deposit/submit` | 广播钱包签名的 tx，然后扫描入账 |
+| `POST` | `/api/points/scan` | 给*该用户*尚未入账的到 treasury 的 INJ 转账入账 |
+
+> 完整应用里登录 `address` 来自钱包签名会话；本独立 demo 从 `X-Login-Address` 头读取——换成你自己的鉴权依赖即可。
+
+## 7. 跑起 demo
+
+```bash
+python3.12 -m venv .venv && . .venv/bin/activate     # injective-py 需要 Python 3.12（coincurve 轮子）
+pip install -r requirements.txt
+export INJ_TREASURY_ADDRESS=inj1youroperatoraddress  # 用户充值的收款地址
+export INJ_TREASURY_NETWORK=mainnet INJ_POINTS_PER_INJ=100 INJ_POINTS_PER_TICK=1
+uvicorn server.app:app --port 8000
+# 打开 http://127.0.0.1:8000/  → 填你的钱包地址 → 充值 → 看积分到账
+```
+
+运营方配置项见 `data.example/inj_deposit.env.example`。
+
+## 8. 隐私与安全
+
+- **本仓库无任何私钥、无 PII。** 服务器只需 treasury **地址**即可收款/扫描，从不需要充值私钥。唯一的"个人数据"是一个公开钱包地址。
+- **非托管充值**（钱包签名）+ **只读结算**（indexer）。
+- `data/`（SQLite 账本）与任何 `.env` 均被 gitignore。
 
 ---
 
