@@ -16,6 +16,8 @@
 > This repo open-sources **only the Injective credit / settlement layer** of Maneki Inj — the part that turns on-chain INJ into agent fuel and meters it.
 > **The core multi-agent trading engine (strategy, LLM decisioning, order execution, risk) is proprietary and NOT open-sourced.** Everything here is self-contained, runnable, and free of any private keys or personal data.
 
+> 📖 **Full product documentation (how the whole multi-agent platform works, product design, the Injective integration, and the roadmap, with diagrams):** **[docs/PRODUCT.md](./docs/PRODUCT.md)**
+
 ---
 
 ## What this is
